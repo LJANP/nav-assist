@@ -1,0 +1,47 @@
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('NavAssist');
+});
+
+// Handle session data from content script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'sessionAddProspects') {
+    chrome.storage.local.get({ sessionData: [], capturedUrls: [] }, function(result) {
+      const existingUrls = new Set(result.capturedUrls);
+      const newProspects = [];
+
+      for (const prospect of message.prospects) {
+        if (prospect.profileUrl && !existingUrls.has(prospect.profileUrl)) {
+          existingUrls.add(prospect.profileUrl);
+          newProspects.push(prospect);
+        }
+      }
+
+      const updatedData = result.sessionData.concat(newProspects);
+      const updatedUrls = Array.from(existingUrls);
+
+      chrome.storage.local.set({
+        sessionData: updatedData,
+        capturedUrls: updatedUrls
+      }, function() {
+        sendResponse({
+          added: newProspects.length,
+          total: updatedData.length
+        });
+      });
+    });
+    return true; // keep message channel open for async response
+  }
+
+  if (message.action === 'getSessionState') {
+    chrome.storage.local.get({
+      sessionActive: false,
+      sessionData: []
+    }, function(result) {
+      sendResponse({
+        active: result.sessionActive,
+        count: result.sessionData.length
+      });
+    });
+    return true;
+  }
+});

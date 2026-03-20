@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NavAssist</title>
+  <style>
+    body {
+      width: 350px;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #0a66c2;
+      border-radius: 3px;
+    }
+
+    .header {
+      padding: 20px 20px 0 20px;
+      margin-bottom: 0;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 4px 0;
+      color: #1d1d1f;
+      font-weight: 600;
+    }
+
+    .author {
+      font-size: 13px;
+      color: #65676b;
+      margin: 0;
+    }
+
+    /* Tab bar */
+    .tab-bar {
+      display: flex;
+      margin: 12px 20px 0 20px;
+      border-bottom: 2px solid #e4e6eb;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 0;
+      background: none;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #65676b;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.2s, border-color 0.2s;
+      font-family: inherit;
+    }
+
+    .tab-btn:hover {
+      color: #1d1d1f;
+    }
+
+    .tab-btn.active {
+      color: #0a66c2;
+      border-bottom-color: #0a66c2;
+    }
+
+    /* Tab content */
+    .tab-content {
+      display: none;
+      padding: 0 20px 20px 20px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card-container {
+      margin: 16px 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 18px;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .card-container:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin-bottom: 14px;
+    }
+
+    .toggle-container {
+      background: white;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.15s;
+    }
+
+    .toggle-container:hover {
+      background-color: #f5f7fa;
+    }
+
+    .toggle-container label {
+      font-size: 14px;
+      color: #1d1d1f;
+      user-select: none;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #d1d5db;
+      transition: background-color 0.25s ease;
+      border-radius: 22px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: transform 0.25s ease;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+
+    input:checked + .slider {
+      background-color: #0a66c2;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+
+    input:disabled + .slider {
+      background-color: #0a66c2;
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .headers-text {
+      font-family: monospace;
+      font-size: 12px;
+      color: #444;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: #f5f7fa;
+      border-radius: 8px;
+      border: 1px solid #e4e6eb;
+      user-select: all;
+      white-space: pre-wrap;
+      tab-size: 2;
+      -moz-tab-size: 2;
+    }
+
+    .copy-button {
+      background-color: #0a66c2;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      width: 100%;
+      transition: background-color 0.2s;
+    }
+
+    .copy-button:hover {
+      background-color: #084e96;
+    }
+
+    .save-button {
+      background-color: #0a66c2;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 24px;
+      width: 100%;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      margin-bottom: 16px;
+    }
+
+    .save-button:hover {
+      background-color: #084e96;
+    }
+
+    .captured-status {
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+      color: #65676b;
+    }
+
+    .captured-count {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0a66c2;
+      margin: 4px 0;
+    }
+
+    .reset-btn {
+      background: none;
+      color: #65676b;
+      border: 1px solid #d1d5db;
+      padding: 8px;
+      border-radius: 24px;
+      width: 100%;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      margin-top: 12px;
+    }
+
+    .reset-btn:hover {
+      color: white;
+      background-color: #d32f2f;
+      border-color: #d32f2f;
+    }
+
+    /* Messaging tab styles */
+    .template-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1d1d1f;
+      margin-bottom: 4px;
+    }
+
+    .helper-text {
+      font-size: 12px;
+      color: #65676b;
+      margin-bottom: 8px;
+    }
+
+    .template-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e4e6eb;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      resize: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .template-textarea:focus {
+      outline: none;
+      border-color: #0a66c2;
+    }
+
+    .template-textarea.subject {
+      height: 44px;
+    }
+
+    .template-textarea.message {
+      height: 100px;
+    }
+
+    .template-group {
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>NavAssist</h1>
+    <p class="author"><a href="mailto:lacst@amazon.com?subject=NavAssist - Feature Request" style="color: #0a66c2; text-decoration: underline;">Request a Feature: @lacst</a></p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="export">Export</button>
+    <button class="tab-btn" data-tab="messaging">Messaging</button>
+  </div>
+
+  <!-- ========== EXPORT TAB ========== -->
+  <div class="tab-content active" id="tab-export">
+    <div class="card-container">
+      <div class="card-title">Export Fields</div>
+
+      <div class="toggle-container" id="fullNameRow" style="cursor: pointer;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span id="nameChevron" style="font-size: 10px; transition: transform 0.2s;">&#9654;</span>
+          <label>Full Name</label>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="includeFullName" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div id="nameSubToggles" style="display: none; padding-left: 20px;">
+        <div class="toggle-container">
+          <label>First Name</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="includeFirstName">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-container">
+          <label>Last Name</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="includeLastName">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="toggle-container">
+        <label>Title</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="includeTitle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-container">
+        <label>Tenure</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="includeTenure" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-container">
+        <label>Location</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="includeLocation" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-container">
+        <label>Status (Leads page only)</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="includeStatus" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button class="save-button" id="saveFilters">Save Settings</button>
+
+    <div class="card-container">
+      <div class="captured-status">
+        <div class="captured-count" id="capturedCount">0</div>
+        <div>prospects captured</div>
+      </div>
+      <button class="reset-btn" id="resetBtn">Reset</button>
+    </div>
+
+    <div class="card-container">
+      <div class="card-title">Column Headers</div>
+      <div class="headers-text" id="headersText">Full Name  |  Title  |  Tenure  |  Location  |  Status</div>
+      <button class="copy-button" id="copyHeaders">Copy Headers</button>
+    </div>
+  </div>
+
+  <!-- ========== MESSAGING TAB ========== -->
+  <div class="tab-content" id="tab-messaging">
+    <div class="card-container">
+      <div class="card-title">Message Templates</div>
+      <div class="helper-text">Placeholders: {name}, {title}, {location}, {tenure}</div>
+
+      <div class="template-group">
+        <div class="template-label">Subject</div>
+        <textarea class="template-textarea subject" id="subjectTemplate" placeholder="Quick question for {name}"></textarea>
+      </div>
+
+      <div class="template-group">
+        <div class="template-label">Message</div>
+        <textarea class="template-textarea message" id="messageTemplate" placeholder="Hey {name}, thanks for connecting!"></textarea>
+      </div>
+    </div>
+
+    <button class="save-button" id="saveTemplates">Save Templates</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
