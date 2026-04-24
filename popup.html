@@ -302,6 +302,137 @@
     .template-group {
       margin-bottom: 12px;
     }
+
+    /* Template library */
+    .template-item-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      cursor: pointer;
+      gap: 8px;
+      border-bottom: 1px solid #e4e6eb;
+    }
+
+    .template-item-header:hover {
+      background-color: #f5f7fa;
+    }
+
+    .template-item-header .chevron {
+      font-size: 10px;
+      transition: transform 0.2s;
+      color: #65676b;
+      flex-shrink: 0;
+    }
+
+    .template-item-header .template-name {
+      font-size: 14px;
+      color: #1d1d1f;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .template-item-header .active-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .template-item-header .active-dot.is-active {
+      border-color: #0a66c2;
+      background: radial-gradient(circle, #0a66c2 40%, transparent 41%);
+    }
+
+    .template-item-header .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #65676b;
+      padding: 2px 4px;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
+    .template-item-header .delete-btn:hover {
+      color: #d32f2f;
+    }
+
+    .template-item-body {
+      display: none;
+      padding: 12px 0 4px 18px;
+    }
+
+    .template-item-body.expanded {
+      display: block;
+    }
+
+    .template-name-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #e4e6eb;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .template-name-input:focus {
+      outline: none;
+      border-color: #0a66c2;
+    }
+
+    .template-save-btn {
+      background-color: #0a66c2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      width: 100%;
+      transition: background-color 0.2s;
+      margin-top: 4px;
+    }
+
+    .template-save-btn:hover {
+      background-color: #084e96;
+    }
+
+    .add-template-btn {
+      background: none;
+      color: #0a66c2;
+      border: 1px dashed #0a66c2;
+      padding: 10px;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      margin-top: 12px;
+      font-family: inherit;
+    }
+
+    .add-template-btn:hover {
+      background-color: #e8f0fe;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 16px 0;
+      color: #65676b;
+      font-size: 13px;
+    }
   </style>
 </head>
 
@@ -404,19 +535,9 @@
     <div class="card-container">
       <div class="card-title">Message Templates</div>
       <div class="helper-text">Placeholders: {name}, {title}, {location}, {tenure}</div>
-
-      <div class="template-group">
-        <div class="template-label">Subject</div>
-        <textarea class="template-textarea subject" id="subjectTemplate" placeholder="Quick question for {name}"></textarea>
-      </div>
-
-      <div class="template-group">
-        <div class="template-label">Message</div>
-        <textarea class="template-textarea message" id="messageTemplate" placeholder="Hey {name}, thanks for connecting!"></textarea>
-      </div>
+      <div id="templateList"></div>
+      <button class="add-template-btn" id="addTemplateBtn">+ New Template</button>
     </div>
-
-    <button class="save-button" id="saveTemplates">Save Templates</button>
   </div>
 
   <script src="popup.js"></script>
