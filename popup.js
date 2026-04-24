@@ -111,32 +111,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ========== MESSAGING TAB: TEMPLATES ==========
 
-    // Load saved templates
-    chrome.storage.local.get(['subjectTemplate', 'messageTemplate'], function(result) {
-        if (result.subjectTemplate) {
-            document.getElementById('subjectTemplate').value = result.subjectTemplate;
-        }
-        if (result.messageTemplate) {
-            document.getElementById('messageTemplate').value = result.messageTemplate;
-        }
-    });
+    loadTemplates();
 
-    // Save templates
-    document.getElementById('saveTemplates').addEventListener('click', function() {
-        const subjectTemplate = document.getElementById('subjectTemplate').value;
-        const messageTemplate = document.getElementById('messageTemplate').value;
-
-        chrome.storage.local.set({
-            subjectTemplate: subjectTemplate,
-            messageTemplate: messageTemplate
-        }, function() {
-            const button = document.getElementById('saveTemplates');
-            button.textContent = 'Saved!';
-            button.style.backgroundColor = '#2e7d32';
-            setTimeout(() => {
-                button.textContent = 'Save Templates';
-                button.style.backgroundColor = '';
-            }, 1500);
+    document.getElementById('addTemplateBtn').addEventListener('click', function() {
+        chrome.storage.local.get({ messageTemplates: [] }, function(result) {
+            var templates = result.messageTemplates;
+            var newTemplate = {
+                id: 't_' + Date.now(),
+                name: 'New Template',
+                subject: '',
+                message: '',
+                active: templates.length === 0
+            };
+            templates.push(newTemplate);
+            chrome.storage.local.set({ messageTemplates: templates }, function() {
+                renderTemplates(templates, newTemplate.id);
+            });
         });
     });
 
@@ -172,4 +162,185 @@ function loadCapturedCount() {
     chrome.storage.local.get({ sessionData: [] }, function(result) {
         document.getElementById('capturedCount').textContent = result.sessionData.length;
     });
+}
+
+// ========== TEMPLATE LIBRARY ==========
+
+function loadTemplates() {
+    chrome.storage.local.get({ messageTemplates: null, subjectTemplate: null, messageTemplate: null }, function(result) {
+        if (result.messageTemplates) {
+            renderTemplates(result.messageTemplates);
+            return;
+        }
+        // Migrate old format
+        if (result.subjectTemplate || result.messageTemplate) {
+            var migrated = [{
+                id: 't_' + Date.now(),
+                name: 'My Template',
+                subject: result.subjectTemplate || '',
+                message: result.messageTemplate || '',
+                active: true
+            }];
+            chrome.storage.local.set({ messageTemplates: migrated }, function() {
+                chrome.storage.local.remove(['subjectTemplate', 'messageTemplate']);
+                renderTemplates(migrated);
+            });
+        } else {
+            renderTemplates([]);
+        }
+    });
+}
+
+function renderTemplates(templates, expandId) {
+    var list = document.getElementById('templateList');
+    list.innerHTML = '';
+
+    if (!templates.length) {
+        list.innerHTML = '<div class="empty-state">No templates yet</div>';
+        return;
+    }
+
+    templates.forEach(function(tmpl) {
+        var item = document.createElement('div');
+        item.className = 'template-item';
+
+        // Header
+        var header = document.createElement('div');
+        header.className = 'template-item-header';
+
+        var chevron = document.createElement('span');
+        chevron.className = 'chevron';
+        chevron.innerHTML = '&#9654;';
+
+        var name = document.createElement('span');
+        name.className = 'template-name';
+        name.textContent = tmpl.name;
+
+        var dot = document.createElement('div');
+        dot.className = 'active-dot' + (tmpl.active ? ' is-active' : '');
+        dot.title = tmpl.active ? 'Active template' : 'Set as active';
+
+        var deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '&#128465;';
+        deleteBtn.title = 'Delete';
+
+        header.appendChild(chevron);
+        header.appendChild(name);
+        header.appendChild(dot);
+        header.appendChild(deleteBtn);
+
+        // Body
+        var body = document.createElement('div');
+        body.className = 'template-item-body';
+
+        body.innerHTML =
+            '<input class="template-name-input" placeholder="Template name" value="' + escapeAttr(tmpl.name) + '">' +
+            '<div class="template-group"><div class="template-label">Subject</div>' +
+            '<textarea class="template-textarea subject" placeholder="Quick question for {name}">' + escapeHtml(tmpl.subject) + '</textarea></div>' +
+            '<div class="template-group"><div class="template-label">Message</div>' +
+            '<textarea class="template-textarea message" placeholder="Hey {name}, thanks for connecting!">' + escapeHtml(tmpl.message) + '</textarea></div>' +
+            '<button class="template-save-btn">Save</button>';
+
+        item.appendChild(header);
+        item.appendChild(body);
+        list.appendChild(item);
+
+        // Expand if requested
+        if (expandId === tmpl.id) {
+            body.classList.add('expanded');
+            chevron.style.transform = 'rotate(90deg)';
+        }
+
+        // Toggle expand/collapse
+        chevron.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleBody(body, chevron);
+        });
+        name.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleBody(body, chevron);
+        });
+
+        // Set active
+        dot.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setActiveTemplate(tmpl.id);
+        });
+
+        // Delete
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteTemplate(tmpl.id);
+        });
+
+        // Save
+        body.querySelector('.template-save-btn').addEventListener('click', function() {
+            saveTemplate(tmpl.id, {
+                name: body.querySelector('.template-name-input').value.trim() || 'Untitled',
+                subject: body.querySelector('.template-textarea.subject').value,
+                message: body.querySelector('.template-textarea.message').value
+            });
+        });
+    });
+}
+
+function toggleBody(body, chevron) {
+    var isOpen = body.classList.contains('expanded');
+    // Collapse all
+    document.querySelectorAll('.template-item-body').forEach(function(b) { b.classList.remove('expanded'); });
+    document.querySelectorAll('.template-item-header .chevron').forEach(function(c) { c.style.transform = ''; });
+    if (!isOpen) {
+        body.classList.add('expanded');
+        chevron.style.transform = 'rotate(90deg)';
+    }
+}
+
+function setActiveTemplate(id) {
+    chrome.storage.local.get({ messageTemplates: [] }, function(result) {
+        var templates = result.messageTemplates;
+        templates.forEach(function(t) { t.active = t.id === id; });
+        chrome.storage.local.set({ messageTemplates: templates }, function() {
+            renderTemplates(templates);
+        });
+    });
+}
+
+function deleteTemplate(id) {
+    chrome.storage.local.get({ messageTemplates: [] }, function(result) {
+        var templates = result.messageTemplates;
+        if (templates.length === 1 && !confirm('Delete your last template?')) return;
+        var wasActive = templates.find(function(t) { return t.id === id; });
+        templates = templates.filter(function(t) { return t.id !== id; });
+        // Auto-promote if deleted was active
+        if (wasActive && wasActive.active && templates.length > 0) {
+            templates[0].active = true;
+        }
+        chrome.storage.local.set({ messageTemplates: templates }, function() {
+            renderTemplates(templates);
+        });
+    });
+}
+
+function saveTemplate(id, updates) {
+    chrome.storage.local.get({ messageTemplates: [] }, function(result) {
+        var templates = result.messageTemplates;
+        var tmpl = templates.find(function(t) { return t.id === id; });
+        if (tmpl) {
+            tmpl.name = updates.name;
+            tmpl.subject = updates.subject;
+            tmpl.message = updates.message;
+        }
+        chrome.storage.local.set({ messageTemplates: templates }, function() {
+            renderTemplates(templates);
+        });
+    });
+}
+
+function escapeAttr(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
+function escapeHtml(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

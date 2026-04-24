@@ -133,18 +133,32 @@ function nameMatches(cardName, firstName, lastName) {
 
 // Insert template
 function insertTemplate(inputElement, templateType) {
-  chrome.storage.local.get([templateType], function(result) {
-    if (result[templateType]) {
+  chrome.storage.local.get({ messageTemplates: [], subjectTemplate: null, messageTemplate: null }, function(result) {
+    var text = '';
+
+    if (result.messageTemplates && result.messageTemplates.length) {
+      var active = result.messageTemplates.find(function(t) { return t.active; });
+      if (active) {
+        text = templateType === 'subjectTemplate' ? active.subject : active.message;
+      }
+    } else if (result[templateType]) {
+      // Fallback to old format during migration.
+      // Migration (converting old keys → messageTemplates array) only runs in popup.js.
+      // The content script intentionally reads without writing to keep it simple —
+      // the popup will migrate on next open.
+      text = result[templateType];
+    }
+
+    if (text) {
       const recipientName = getRecipientName();
       const details = getRecipientDetails();
-      const personalizedMessage = result[templateType]
+      const personalizedMessage = text
         .replace(/{name}/g, recipientName)
         .replace(/{title}/g, details.title)
         .replace(/{location}/g, details.location)
         .replace(/{tenure}/g, details.tenure);
       inputElement.value = personalizedMessage;
 
-      // Trigger input event
       const event = new Event('input', { bubbles: true });
       inputElement.dispatchEvent(event);
 
