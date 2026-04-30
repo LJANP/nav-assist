@@ -64,7 +64,7 @@ function getRecipientName() {
 // Find the matching profile card or table row by recipient name and extract fields
 function getRecipientDetails() {
   const fullName = getRecipientFullName();
-  if (!fullName) return { title: '', location: '', tenure: '' };
+  if (!fullName) return { title: '', company: '', location: '', tenure: '' };
 
   const firstName = fullName.split(' ')[0];
   const lastName = fullName.split(' ').slice(1).join(' ');
@@ -78,6 +78,7 @@ function getRecipientDetails() {
     if (!nameMatches(cardName, firstName, lastName)) continue;
 
     const titleEl = card.querySelector('span[data-anonymize="title"]');
+    const companyEl = card.querySelector('a[data-anonymize="company-name"]');
     const locationEl = card.querySelector('div.artdeco-entity-lockup__caption');
 
     let tenure = '';
@@ -96,6 +97,7 @@ function getRecipientDetails() {
 
     return {
       title: titleEl ? titleEl.textContent.trim() : '',
+      company: companyEl ? companyEl.textContent.trim() : '',
       location: locationEl ? locationEl.textContent.trim() : '',
       tenure: tenure
     };
@@ -117,12 +119,13 @@ function getRecipientDetails() {
 
     return {
       title: titleEl ? titleEl.textContent.trim() : '',
+      company: '',
       location: location,
       tenure: ''
     };
   }
 
-  return { title: '', location: '', tenure: '' };
+  return { title: '', company: '', location: '', tenure: '' };
 }
 
 function nameMatches(cardName, firstName, lastName) {
@@ -155,6 +158,7 @@ function insertTemplate(inputElement, templateType) {
       const personalizedMessage = text
         .replace(/{name}/g, recipientName)
         .replace(/{title}/g, details.title)
+        .replace(/{company}/g, details.company)
         .replace(/{location}/g, details.location)
         .replace(/{tenure}/g, details.tenure);
       inputElement.value = personalizedMessage;
