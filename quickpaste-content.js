@@ -113,13 +113,14 @@ function getRecipientDetails() {
     if (!nameMatches(rowName, firstName, lastName)) continue;
 
     const titleEl = row.querySelector('div[data-anonymize="job-title"]');
+    const companyEl = row.querySelector('[data-anonymize="company-name"]');
     let location = '';
     const cells = row.querySelectorAll('td');
     if (cells.length >= 3) location = cells[2].textContent.trim();
 
     return {
       title: titleEl ? titleEl.textContent.trim() : '',
-      company: '',
+      company: companyEl ? companyEl.textContent.trim() : '',
       location: location,
       tenure: ''
     };
