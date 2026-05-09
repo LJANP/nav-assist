@@ -5,6 +5,7 @@ class LinkedInScraper {
         includeFullName: true,
         includeFirstName: false,
         includeLastName: false,
+        includeCompany: true,
         includeTitle: true,
         includeTenure: true,
         includeLocation: true,
@@ -25,6 +26,7 @@ class LinkedInScraper {
           includeFullName: true,
           includeFirstName: false,
           includeLastName: false,
+          includeCompany: true,
           includeTitle: true,
           includeTenure: true,
           includeLocation: true,
@@ -309,6 +311,24 @@ class LinkedInScraper {
         const name = nameElement ? nameElement.textContent.trim() : '';
         const profileUrl = nameElement ? nameElement.href : '';
 
+        const companyElement = profile.querySelector('[data-anonymize="company-name"]');
+        let company = '';
+        if (companyElement) {
+          company = companyElement.textContent.trim();
+        } else {
+          const separator = profile.querySelector('span.separator--middot');
+          if (separator) {
+            let node = separator.nextSibling;
+            while (node) {
+              if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                company = node.textContent.trim();
+                break;
+              }
+              node = node.nextSibling;
+            }
+          }
+        }
+
         let title = '';
         if (this.filters.includeTitle) {
           const titleElement = profile.querySelector('span[data-anonymize="title"]');
@@ -329,6 +349,7 @@ class LinkedInScraper {
         const data = {
           fullName: name,
           profileUrl: profileUrl,
+          company: company,
           title: title,
           tenure: tenure,
           location: location
@@ -386,6 +407,10 @@ class LinkedInScraper {
 
         const name = nameElement ? nameElement.textContent.trim() : '';
         const profileUrl = nameElement ? nameElement.closest('a').href : '';
+
+        // Extract company from Account column (only linked companies have data-anonymize)
+        const companyElement = row.querySelector('[data-anonymize="company-name"]');
+        const company = companyElement ? companyElement.textContent.trim() : '';
 
         // Extract title if enabled - look for job title div
         let title = '';
@@ -448,6 +473,7 @@ class LinkedInScraper {
         const data = {
           fullName: name,
           profileUrl: profileUrl,
+          company: company,
           title: title,
           location: location,
           status: status,
@@ -542,6 +568,7 @@ class LinkedInScraper {
       if (this.filters.includeFullName) headers.push('Full Name');
       if (this.filters.includeFirstName) headers.push('First Name');
       if (this.filters.includeLastName) headers.push('Last Name');
+      if (this.filters.includeCompany) headers.push('Company');
       if (this.filters.includeTitle) headers.push('Title');
 
       // Only include Tenure if we have tenure data (not available on leads pages)
@@ -568,6 +595,7 @@ class LinkedInScraper {
         if (this.filters.includeFullName) row.push(profile.fullName);
         if (this.filters.includeFirstName) row.push(splitName(profile.fullName).firstName);
         if (this.filters.includeLastName) row.push(splitName(profile.fullName).lastName);
+        if (this.filters.includeCompany) row.push(profile.company || '');
         if (this.filters.includeTitle) row.push(profile.title || '');
         if (hasTenure) row.push(profile.tenure || '');
         if (this.filters.includeLocation) row.push(profile.location || '');
@@ -626,6 +654,7 @@ class LinkedInScraper {
       if (this.filters.includeFullName) headers.push('Full Name');
       if (this.filters.includeFirstName) headers.push('First Name');
       if (this.filters.includeLastName) headers.push('Last Name');
+      if (this.filters.includeCompany) headers.push('Company');
       if (this.filters.includeTitle) headers.push('Title');
 
       // Only include Tenure if we have tenure data (not available on leads pages)
@@ -653,6 +682,7 @@ class LinkedInScraper {
           if (this.filters.includeFullName) row.push(this.createHyperlink(profile.fullName, profile.profileUrl));
           if (this.filters.includeFirstName) row.push(this.escapeCSV(splitName(profile.fullName).firstName));
           if (this.filters.includeLastName) row.push(this.escapeCSV(splitName(profile.fullName).lastName));
+          if (this.filters.includeCompany) row.push(this.escapeCSV(profile.company || ''));
           if (this.filters.includeTitle) row.push(this.escapeCSV(profile.title || ''));
           if (hasTenure) row.push(this.escapeCSV(profile.tenure || ''));
           if (this.filters.includeLocation) row.push(this.escapeCSV(profile.location || ''));
@@ -1017,6 +1047,7 @@ const SessionManager = {
     if (filters.includeFullName) headers.push('Full Name');
     if (filters.includeFirstName) headers.push('First Name');
     if (filters.includeLastName) headers.push('Last Name');
+    if (filters.includeCompany) headers.push('Company');
     if (filters.includeTitle) headers.push('Title');
     const hasTenure = data.some(item => item.tenure) && filters.includeTenure;
     if (hasTenure) headers.push('Tenure');
@@ -1028,6 +1059,7 @@ const SessionManager = {
       if (filters.includeFullName) row.push(profile.fullName || '');
       if (filters.includeFirstName) row.push(splitName(profile.fullName).firstName);
       if (filters.includeLastName) row.push(splitName(profile.fullName).lastName);
+      if (filters.includeCompany) row.push(profile.company || '');
       if (filters.includeTitle) row.push(profile.title || '');
       if (hasTenure) row.push(profile.tenure || '');
       if (filters.includeLocation) row.push(profile.location || '');
@@ -1089,6 +1121,24 @@ const SessionManager = {
       const titleElement = profile.querySelector('span[data-anonymize="title"]');
       const title = titleElement ? titleElement.textContent.trim() : '';
 
+      const companyElement = profile.querySelector('[data-anonymize="company-name"]');
+      let company = '';
+      if (companyElement) {
+        company = companyElement.textContent.trim();
+      } else {
+        const separator = profile.querySelector('span.separator--middot');
+        if (separator) {
+          let node = separator.nextSibling;
+          while (node) {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+              company = node.textContent.trim();
+              break;
+            }
+            node = node.nextSibling;
+          }
+        }
+      }
+
       const locationElement = profile.querySelector('div.artdeco-entity-lockup__caption');
       const location = locationElement ? locationElement.textContent.trim() : '';
 
@@ -1106,7 +1156,7 @@ const SessionManager = {
         if (match && match[1]) { tenure = match[1].trim(); break; }
       }
 
-      profiles.push({ fullName: name, profileUrl, title, tenure, location, status: '' });
+      profiles.push({ fullName: name, profileUrl, company, title, tenure, location, status: '' });
     }
     return profiles;
   },
@@ -1130,6 +1180,9 @@ const SessionManager = {
       const titleElement = row.querySelector('div[data-anonymize="job-title"]');
       const title = titleElement ? titleElement.textContent.trim() : '';
 
+      const companyElement = row.querySelector('[data-anonymize="company-name"]');
+      const company = companyElement ? companyElement.textContent.trim() : '';
+
       let location = '';
       const cells = row.querySelectorAll('td');
       if (cells.length >= 3) location = cells[2].textContent.trim();
@@ -1144,7 +1197,7 @@ const SessionManager = {
         }
       }
 
-      leads.push({ fullName: name, profileUrl, title, tenure: '', location, status });
+      leads.push({ fullName: name, profileUrl, company, title, tenure: '', location, status });
     }
     return leads;
   },

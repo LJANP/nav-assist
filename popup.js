@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         includeFullName: true,
         includeFirstName: false,
         includeLastName: false,
+        includeCompany: true,
         includeTitle: true,
         includeTenure: true,
         includeLocation: true,
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('includeFullName').checked = items.includeFullName;
         document.getElementById('includeFirstName').checked = items.includeFirstName;
         document.getElementById('includeLastName').checked = items.includeLastName;
+        document.getElementById('includeCompany').checked = items.includeCompany;
         document.getElementById('includeTitle').checked = items.includeTitle;
         document.getElementById('includeTenure').checked = items.includeTenure;
         document.getElementById('includeLocation').checked = items.includeLocation;
@@ -50,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
             includeFullName: document.getElementById('includeFullName').checked,
             includeFirstName: document.getElementById('includeFirstName').checked,
             includeLastName: document.getElementById('includeLastName').checked,
+            includeCompany: document.getElementById('includeCompany').checked,
             includeTitle: document.getElementById('includeTitle').checked,
             includeTenure: document.getElementById('includeTenure').checked,
             includeLocation: document.getElementById('includeLocation').checked,
@@ -69,12 +72,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Update headers display on toggle change
-    ['includeFullName', 'includeFirstName', 'includeLastName', 'includeTitle', 'includeTenure', 'includeLocation', 'includeStatus'].forEach(id => {
+    ['includeFullName', 'includeFirstName', 'includeLastName', 'includeCompany', 'includeTitle', 'includeTenure', 'includeLocation', 'includeStatus'].forEach(id => {
         document.getElementById(id).addEventListener('change', function() {
             updateHeadersDisplay({
                 includeFullName: document.getElementById('includeFullName').checked,
                 includeFirstName: document.getElementById('includeFirstName').checked,
                 includeLastName: document.getElementById('includeLastName').checked,
+                includeCompany: document.getElementById('includeCompany').checked,
                 includeTitle: document.getElementById('includeTitle').checked,
                 includeTenure: document.getElementById('includeTenure').checked,
                 includeLocation: document.getElementById('includeLocation').checked,
@@ -139,6 +143,7 @@ function getSelectedHeaders() {
     if (document.getElementById('includeFullName').checked) headers.push('Full Name');
     if (document.getElementById('includeFirstName').checked) headers.push('First Name');
     if (document.getElementById('includeLastName').checked) headers.push('Last Name');
+    if (document.getElementById('includeCompany').checked) headers.push('Company');
     if (document.getElementById('includeTitle').checked) headers.push('Title');
     if (document.getElementById('includeTenure').checked) headers.push('Tenure');
     if (document.getElementById('includeLocation').checked) headers.push('Location');
@@ -151,6 +156,7 @@ function updateHeadersDisplay(settings) {
     if (settings.includeFullName) headers.push('Full Name');
     if (settings.includeFirstName) headers.push('First Name');
     if (settings.includeLastName) headers.push('Last Name');
+    if (settings.includeCompany) headers.push('Company');
     if (settings.includeTitle) headers.push('Title');
     if (settings.includeTenure) headers.push('Tenure');
     if (settings.includeLocation) headers.push('Location');
