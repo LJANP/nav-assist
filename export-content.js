@@ -995,8 +995,48 @@ const SessionManager = {
         });
       });
 
+      const sfdcBtn = document.createElement('button');
+      sfdcBtn.textContent = 'Send to SFDC via Kiro';
+      sfdcBtn.style.cssText = `
+        background-color: #0a66c2; color: white; padding: 8px 20px;
+        border: none; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: background-color 0.2s ease;
+      `;
+      sfdcBtn.onmouseover = () => { sfdcBtn.style.backgroundColor = '#084e96'; };
+      sfdcBtn.onmouseout = () => { sfdcBtn.style.backgroundColor = '#0a66c2'; };
+      sfdcBtn.addEventListener('click', () => {
+        chrome.storage.local.get({ sessionData: [] }, (result) => {
+          if (!result.sessionData.length) {
+            alert('No prospects captured. Capture some first.');
+            return;
+          }
+          this.copySfdcImportPrompt(result.sessionData).then(() => {
+            sfdcBtn.textContent = 'Copied!';
+            setTimeout(() => { sfdcBtn.textContent = 'Send to SFDC via Kiro'; }, 1500);
+            this.showSfdcConfirmation(wrapper);
+            this.insertResetButton(wrapper);
+          }).catch(() => {
+            alert('Failed to copy to clipboard. Please try again.');
+          });
+        });
+      });
+
+      const infoIcon = document.createElement('span');
+      infoIcon.textContent = 'ⓘ';
+      infoIcon.title = 'Copies a prompt for Kiro to add these prospects to Salesforce. Requires Kiro CLI with Salesforce MCP.';
+      infoIcon.style.cssText = `
+        cursor: help;
+        font-size: 16px;
+        color: #65676b;
+        display: inline-flex;
+        align-items: center;
+      `;
+
       wrapper.appendChild(copyBtn);
       wrapper.appendChild(csvBtn);
+      wrapper.appendChild(sfdcBtn);
+      wrapper.appendChild(infoIcon);
       finishedBtn.parentNode.insertBefore(wrapper, finishedBtn.nextSibling);
       finishedBtn.remove();
     });
@@ -1004,6 +1044,81 @@ const SessionManager = {
     captureBtn.parentNode.insertBefore(finishedBtn, captureBtn.nextSibling);
   },
 
+  async copySfdcImportPrompt(data) {
+    const splitName = (fullName) => {
+      const parts = (fullName || '').trim().split(/\s+/);
+      return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
+    };
+
+    const records = data.map(p => {
+      const { firstName, lastName } = splitName(p.fullName);
+      return {
+        firstName,
+        lastName,
+        title: p.title || '',
+        company: p.company || '',
+        linkedInUrl: p.profileUrl || ''
+      };
+    });
+
+    const prompt = this.buildSfdcImportPrompt(records);
+    await navigator.clipboard.writeText(prompt);
+  },
+
+  buildSfdcImportPrompt(records) {
+    const instructions = `Import the following LinkedIn prospects into Salesforce as Contacts.
+
+Rules:
+1. Only use field values from the JSON below. Never infer or guess.
+2. For each contact:
+   a. Run search_accounts with the company name. Only use an accountId
+      if the match is exact (case-insensitive) or an obvious variant
+      (e.g., "Acme Corp" ↔ "Acme Corporation"). If unsure, skip and
+      list under "Unmatched accounts".
+   b. Before creating, run search_contacts filtered by the matched
+      accountId and the prospect's firstName + lastName. If a match
+      is found, skip as duplicate — do not create.
+   c. If no duplicate, run create_contact with the provided fields
+      plus the accountId.
+3. Never create a contact without an accountId. Skip and list as
+   unmatched if no account is found.
+4. Omit any field not present in the JSON record — do not substitute
+   or invent values.
+5. Process sequentially. If three consecutive contacts fail for the
+   same reason, stop and report.
+
+After completion, output:
+- Created: count and list of (name, contact ID)
+- Duplicates skipped: count and list of (name, existing contact ID)
+- Unmatched accounts: count and list of (name, company)
+- Errors: count and list of (name, error)
+
+Contacts:
+`;
+    return instructions + JSON.stringify(records, null, 2);
+  },
+
+  showSfdcConfirmation(wrapper) {
+    const existing = document.getElementById('sfdc-confirmation-msg');
+    if (existing) existing.remove();
+
+    const msg = document.createElement('div');
+    msg.id = 'sfdc-confirmation-msg';
+    msg.textContent = '✓ Copied! Open Kiro, paste, and press Enter.';
+    msg.style.cssText = `
+      text-align: right;
+      color: #057642;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 8px 0;
+    `;
+    wrapper.parentNode.insertBefore(msg, wrapper.nextSibling);
+
+    setTimeout(() => {
+      if (msg.parentNode) msg.remove();
+    }, 4000);
+  },
   insertResetButton(wrapper) {
     if (document.getElementById('session-reset-btn')) return;
 
