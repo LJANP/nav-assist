@@ -52,6 +52,16 @@ function getRecipientFullName() {
     if (fullName) return fullName;
   }
 
+  // Try the Sales Navigator inbox (right-rail shows the open conversation's recipient)
+  const inboxRail = document.querySelector('.inbox__right-rail-container');
+  if (inboxRail) {
+    const inboxNameElement = inboxRail.querySelector('span[data-anonymize="person-name"]');
+    if (inboxNameElement) {
+      const fullName = inboxNameElement.textContent.trim();
+      if (fullName) return fullName;
+    }
+  }
+
   return '';
 }
 
@@ -122,6 +132,18 @@ function getRecipientDetails() {
       title: titleEl ? titleEl.textContent.trim() : '',
       company: companyEl ? companyEl.textContent.trim() : '',
       location: location,
+      tenure: ''
+    };
+  }
+
+  // Try the Sales Navigator inbox right-rail (no card/row match needed; rail represents the open recipient)
+  const inboxRail = document.querySelector('.inbox__right-rail-container');
+  if (inboxRail) {
+    const locationEl = inboxRail.querySelector('span[data-anonymize="location"]');
+    return {
+      title: '',
+      company: '',
+      location: locationEl ? locationEl.textContent.trim() : '',
       tenure: ''
     };
   }
