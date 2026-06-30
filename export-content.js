@@ -996,7 +996,7 @@ const SessionManager = {
       });
 
       const sfdcBtn = document.createElement('button');
-      sfdcBtn.textContent = 'Send to SFDC via Kiro';
+      sfdcBtn.textContent = 'Send to SFDC via Quicksuite';
       sfdcBtn.style.cssText = `
         background-color: #0a66c2; color: white; padding: 8px 20px;
         border: none; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px;
@@ -1013,7 +1013,7 @@ const SessionManager = {
           }
           this.copySfdcImportPrompt(result.sessionData).then(() => {
             sfdcBtn.textContent = 'Copied!';
-            setTimeout(() => { sfdcBtn.textContent = 'Send to SFDC via Kiro'; }, 1500);
+            setTimeout(() => { sfdcBtn.textContent = 'Send to SFDC via Quicksuite'; }, 1500);
             this.showSfdcConfirmation(wrapper);
             this.insertResetButton(wrapper);
           }).catch(() => {
@@ -1024,7 +1024,7 @@ const SessionManager = {
 
       const infoIcon = document.createElement('span');
       infoIcon.textContent = 'ⓘ';
-      infoIcon.title = 'Copies a prompt for Kiro to add these prospects to Salesforce. Requires Kiro CLI with Salesforce MCP.';
+      infoIcon.title = 'Copies a prompt for Quicksuite to add these prospects to Salesforce. Requires Quicksuite with Salesforce MCP.';
       infoIcon.style.cssText = `
         cursor: help;
         font-size: 16px;
@@ -1104,7 +1104,7 @@ Contacts:
 
     const msg = document.createElement('div');
     msg.id = 'sfdc-confirmation-msg';
-    msg.textContent = '✓ Copied! Open Kiro, paste, and press Enter.';
+    msg.textContent = '✓ Copied! Open Quicksuite, paste, and press Enter.';
     msg.style.cssText = `
       text-align: right;
       color: #057642;
