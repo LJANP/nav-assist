@@ -531,6 +531,23 @@ class LinkedInScraper {
     return '';
   }
 
+  async mergeSentMessages(data) {
+    return new Promise((resolve) => {
+      chrome.storage.local.get({ sentMessages: {} }, (result) => {
+        const sent = result.sentMessages;
+        const merged = data.map(p => {
+          const key = (p.fullName || '').trim().toLowerCase();
+          const hit = sent[key];
+          if (hit) {
+            return Object.assign({}, p, { sentMessage: hit.message, sentDate: hit.date });
+          }
+          return p;
+        });
+        resolve(merged);
+      });
+    });
+  }
+
   async handleExport() {
     console.log('Starting export process');
     let profiles;
@@ -549,6 +566,8 @@ class LinkedInScraper {
 
     if (profiles && profiles.length > 0) {
       console.log(`Exporting ${profiles.length} profiles/leads`);
+
+      profiles = await this.mergeSentMessages(profiles);
 
       if (this.filters.exportAsCSV) {
         this.exportToCSV(profiles);
@@ -581,6 +600,13 @@ class LinkedInScraper {
       const hasStatus = data.some(item => item.status) && this.filters.includeStatus;
       if (hasStatus) headers.push('Status');
 
+      // Add Sent Date/Message when any prospect has recorded message data
+      const hasSentMessage = data.some(item => item.sentMessage);
+      if (hasSentMessage) {
+        headers.push('Sent Date');
+        headers.push('Sent Message');
+      }
+
       // Helper to split name
       const splitName = (fullName) => {
         const parts = (fullName || '').trim().split(/\s+/);
@@ -600,6 +626,8 @@ class LinkedInScraper {
         if (hasTenure) row.push(profile.tenure || '');
         if (this.filters.includeLocation) row.push(profile.location || '');
         if (hasStatus) row.push(profile.status || '');
+        if (hasSentMessage) row.push(profile.sentDate || '');
+        if (hasSentMessage) row.push(profile.sentMessage || '');
         return row;
       });
 
@@ -667,6 +695,13 @@ class LinkedInScraper {
       const hasStatus = data.some(item => item.status) && this.filters.includeStatus;
       if (hasStatus) headers.push('Status');
 
+      // Add Sent Date/Message when any prospect has recorded message data
+      const hasSentMessage = data.some(item => item.sentMessage);
+      if (hasSentMessage) {
+        headers.push('Sent Date');
+        headers.push('Sent Message');
+      }
+
       // Helper to split name
       const splitName = (fullName) => {
         const parts = (fullName || '').trim().split(/\s+/);
@@ -687,6 +722,8 @@ class LinkedInScraper {
           if (hasTenure) row.push(this.escapeCSV(profile.tenure || ''));
           if (this.filters.includeLocation) row.push(this.escapeCSV(profile.location || ''));
           if (hasStatus) row.push(this.escapeCSV(profile.status || ''));
+          if (hasSentMessage) row.push(this.escapeCSV(profile.sentDate || ''));
+          if (hasSentMessage) row.push(this.escapeCSV(profile.sentMessage || ''));
           return row.join(',');
         })
       ].filter(row => row).join('\n');
@@ -799,6 +836,8 @@ const SessionManager = {
     this.initialized = true;
 
     // Listen for messages from popup
+    // NOTE: sessionExport is currently unused (no sender). If re-enabled,
+    // call scraper.mergeSentMessages(data) before exporting.
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === 'sessionExport') {
         this.handleExport(message.exportType, message.data).then(() => {
@@ -965,10 +1004,12 @@ const SessionManager = {
           if (!result.sessionData.length) return;
           const scraper = getOrCreateScraper();
           scraper.loadFilters().then(() => {
-            scraper.copyToClipboard(result.sessionData).then(() => {
-              copyBtn.textContent = 'Copied!';
-              setTimeout(() => { copyBtn.textContent = 'Copy to Clipboard'; }, 1500);
-              this.insertResetButton(wrapper);
+            scraper.mergeSentMessages(result.sessionData).then((merged) => {
+              scraper.copyToClipboard(merged).then(() => {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => { copyBtn.textContent = 'Copy to Clipboard'; }, 1500);
+                this.insertResetButton(wrapper);
+              });
             });
           });
         });
@@ -989,8 +1030,10 @@ const SessionManager = {
           if (!result.sessionData.length) return;
           const scraper = getOrCreateScraper();
           scraper.loadFilters().then(() => {
-            scraper.exportToCSV(result.sessionData);
-            this.insertResetButton(wrapper);
+            scraper.mergeSentMessages(result.sessionData).then((merged) => {
+              scraper.exportToCSV(merged);
+              this.insertResetButton(wrapper);
+            });
           });
         });
       });
@@ -1011,13 +1054,16 @@ const SessionManager = {
             alert('No prospects captured. Capture some first.');
             return;
           }
-          this.copySfdcImportPrompt(result.sessionData).then(() => {
-            sfdcBtn.textContent = 'Copied!';
-            setTimeout(() => { sfdcBtn.textContent = 'Send to SFDC via Quicksuite'; }, 1500);
-            this.showSfdcConfirmation(wrapper);
-            this.insertResetButton(wrapper);
-          }).catch(() => {
-            alert('Failed to copy to clipboard. Please try again.');
+          const scraper = getOrCreateScraper();
+          scraper.mergeSentMessages(result.sessionData).then((merged) => {
+            this.copySfdcImportPrompt(merged).then(() => {
+              sfdcBtn.textContent = 'Copied!';
+              setTimeout(() => { sfdcBtn.textContent = 'Send to SFDC via Quicksuite'; }, 1500);
+              this.showSfdcConfirmation(wrapper);
+              this.insertResetButton(wrapper);
+            }).catch(() => {
+              alert('Failed to copy to clipboard. Please try again.');
+            });
           });
         });
       });
@@ -1057,7 +1103,9 @@ const SessionManager = {
         lastName,
         title: p.title || '',
         company: p.company || '',
-        linkedInUrl: p.profileUrl || ''
+        linkedInUrl: p.profileUrl || '',
+        sentDate: p.sentDate || '',
+        sentMessage: p.sentMessage || ''
       };
     });
 
@@ -1077,9 +1125,19 @@ Rules:
       list under "Unmatched accounts".
    b. Before creating, run search_contacts filtered by the matched
       accountId and the prospect's firstName + lastName. If a match
-      is found, skip as duplicate — do not create.
+      is found, use the existing contact — do not create a new one.
+      Track it as a duplicate in the final report.
    c. If no duplicate, run create_contact with the provided fields
       plus the accountId.
+   d. If sentMessage is non-empty, run create_task attached to the
+      contact (whether newly created or existing duplicate) with:
+        - Subject: "LinkedIn message sent"
+        - Description: if sentDate is non-empty,
+          "Sent {sentDate}:\n\n{sentMessage}"
+          otherwise just {sentMessage}
+        - Status: "Completed"
+        - Type: "InMail"
+      If sentMessage is empty, skip task creation for that contact.
 3. Never create a contact without an accountId. Skip and list as
    unmatched if no account is found.
 4. Omit any field not present in the JSON record — do not substitute
@@ -1090,6 +1148,7 @@ Rules:
 After completion, output:
 - Created: count and list of (name, contact ID)
 - Duplicates skipped: count and list of (name, existing contact ID)
+- Tasks created: count and list of (name, contact ID)
 - Unmatched accounts: count and list of (name, company)
 - Errors: count and list of (name, error)
 
@@ -1143,7 +1202,7 @@ Contacts:
     resetBtn.onmouseout = () => { resetBtn.style.color = '#65676b'; resetBtn.style.borderColor = '#65676b'; };
 
     resetBtn.addEventListener('click', () => {
-      chrome.storage.local.set({ sessionData: [], capturedUrls: [] }, () => {
+      chrome.storage.local.set({ sessionData: [], capturedUrls: [], sentMessages: {} }, () => {
         this.updateBadge(0);
         wrapper.remove();
         resetBtn.remove();

@@ -189,9 +189,26 @@ function insertTemplate(inputElement, templateType) {
       const event = new Event('input', { bubbles: true });
       inputElement.dispatchEvent(event);
 
-      hideButtons();
+      if (templateType === 'messageTemplate') {
+        const fullName = getRecipientFullName();
+        chrome.runtime.sendMessage({
+          action: 'recordSentMessage',
+          fullName: fullName,
+          message: personalizedMessage
+        }, function(response) {
+          showPasteFeedback(response && response.recorded);
+        });
+      } else {
+        hideButtons();
+      }
     }
   });
+}
+
+function showPasteFeedback(recorded) {
+  if (!messageButton) return;
+  messageButton.textContent = recorded ? 'Message pasted' : 'Pasted (recipient unknown)';
+  setTimeout(hideButtons, 1500);
 }
 
 // Initialize buttons
