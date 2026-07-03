@@ -1,3 +1,5 @@
+let hasSentMessageCache = false;
+
 document.addEventListener('DOMContentLoaded', function() {
 
     // ========== TABS ==========
@@ -108,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Reset captured data
     document.getElementById('resetBtn').addEventListener('click', function() {
-        chrome.storage.local.set({ sessionData: [], capturedUrls: [] }, function() {
+        chrome.storage.local.set({ sessionData: [], capturedUrls: [], sentMessages: {} }, function() {
             loadCapturedCount();
         });
     });
@@ -148,20 +150,34 @@ function getSelectedHeaders() {
     if (document.getElementById('includeTenure').checked) headers.push('Tenure');
     if (document.getElementById('includeLocation').checked) headers.push('Location');
     if (document.getElementById('includeStatus').checked) headers.push('Status');
+    if (hasSentMessageCache) {
+        headers.push('Sent Date');
+        headers.push('Sent Message');
+    }
     return headers;
 }
 
 function updateHeadersDisplay(settings) {
-    const headers = [];
-    if (settings.includeFullName) headers.push('Full Name');
-    if (settings.includeFirstName) headers.push('First Name');
-    if (settings.includeLastName) headers.push('Last Name');
-    if (settings.includeCompany) headers.push('Company');
-    if (settings.includeTitle) headers.push('Title');
-    if (settings.includeTenure) headers.push('Tenure');
-    if (settings.includeLocation) headers.push('Location');
-    if (settings.includeStatus) headers.push('Status');
-    document.getElementById('headersText').textContent = headers.join('  |  ');
+    chrome.storage.local.get({ sessionData: [], sentMessages: {} }, function(result) {
+        const sent = result.sentMessages;
+        hasSentMessageCache = result.sessionData.some(function(p) {
+            return sent[(p.fullName || '').trim().toLowerCase()];
+        });
+        const headers = [];
+        if (settings.includeFullName) headers.push('Full Name');
+        if (settings.includeFirstName) headers.push('First Name');
+        if (settings.includeLastName) headers.push('Last Name');
+        if (settings.includeCompany) headers.push('Company');
+        if (settings.includeTitle) headers.push('Title');
+        if (settings.includeTenure) headers.push('Tenure');
+        if (settings.includeLocation) headers.push('Location');
+        if (settings.includeStatus) headers.push('Status');
+        if (hasSentMessageCache) {
+            headers.push('Sent Date');
+            headers.push('Sent Message');
+        }
+        document.getElementById('headersText').textContent = headers.join('  |  ');
+    });
 }
 
 function loadCapturedCount() {

@@ -44,4 +44,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+
+  if (message.action === 'recordSentMessage') {
+    const target = (message.fullName || '').trim().toLowerCase();
+    if (!target || !message.message) {
+      sendResponse({ recorded: false });
+      return true;
+    }
+    chrome.storage.local.get({ sentMessages: {} }, function(result) {
+      const sent = result.sentMessages;
+      sent[target] = {
+        message: message.message,
+        date: formatSentDate(new Date())
+      };
+      chrome.storage.local.set({ sentMessages: sent }, function() {
+        sendResponse({ recorded: true });
+      });
+    });
+    return true;
+  }
 });
+
+function formatSentDate(d) {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return mm + '/' + dd + '/' + yy;
+}
