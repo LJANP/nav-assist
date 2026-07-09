@@ -1136,7 +1136,7 @@ Rules:
           "Sent {sentDate}:\n\n{sentMessage}"
           otherwise just {sentMessage}
         - Status: "Completed"
-        - Type: "InMail"
+        - Type: "LinkedIn Connection"
       If sentMessage is empty, skip task creation for that contact.
 3. Never create a contact without an accountId. Skip and list as
    unmatched if no account is found.
