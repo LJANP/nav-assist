@@ -1129,15 +1129,16 @@ Rules:
       Track it as a duplicate in the final report.
    c. If no duplicate, run create_contact with the provided fields
       plus the accountId.
-   d. If sentMessage is non-empty, run create_task attached to the
-      contact (whether newly created or existing duplicate) with:
+   d. If sentMessage is non-empty, log a Call (TaskSubtype = "Call")
+      attached to the contact (whether newly created or existing duplicate) with:
         - Subject: "LinkedIn message sent"
         - Description: if sentDate is non-empty,
           "Sent {sentDate}:\n\n{sentMessage}"
           otherwise just {sentMessage}
         - Status: "Completed"
         - Type: "LinkedIn Connection"
-      If sentMessage is empty, skip task creation for that contact.
+        - LDR Call Type: "Not Connected"
+      If sentMessage is empty, skip call logging for that contact.
 3. Never create a contact without an accountId. Skip and list as
    unmatched if no account is found.
 4. Omit any field not present in the JSON record — do not substitute
@@ -1148,7 +1149,7 @@ Rules:
 After completion, output:
 - Created: count and list of (name, contact ID)
 - Duplicates skipped: count and list of (name, existing contact ID)
-- Tasks created: count and list of (name, contact ID)
+- Calls logged: count and list of (name, contact ID)
 - Unmatched accounts: count and list of (name, company)
 - Errors: count and list of (name, error)
 
