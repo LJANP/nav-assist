@@ -55,7 +55,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const sent = result.sentMessages;
       sent[target] = {
         message: message.message,
-        date: formatSentDate(new Date())
+        date: formatSentDate(new Date()),
+        campaign: message.campaign || ''
       };
       chrome.storage.local.set({ sentMessages: sent }, function() {
         sendResponse({ recorded: true });

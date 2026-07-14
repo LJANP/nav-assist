@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 name: 'New Template',
                 subject: '',
                 message: '',
+                campaign: '',
                 active: templates.length === 0
             };
             templates.push(newTemplate);
@@ -262,6 +263,8 @@ function renderTemplates(templates, expandId) {
             '<textarea class="template-textarea subject" placeholder="Quick question for {name}">' + escapeHtml(tmpl.subject) + '</textarea></div>' +
             '<div class="template-group"><div class="template-label">Message</div>' +
             '<textarea class="template-textarea message" placeholder="Hey {name}, thanks for connecting!">' + escapeHtml(tmpl.message) + '</textarea></div>' +
+            '<div class="template-group"><div class="template-label">Campaign (optional)</div>' +
+            '<input class="template-campaign-input" placeholder="Campaign name / tag" value="' + escapeAttr(tmpl.campaign) + '"></div>' +
             '<button class="template-save-btn">Save</button>';
 
         item.appendChild(header);
@@ -301,7 +304,8 @@ function renderTemplates(templates, expandId) {
             saveTemplate(tmpl.id, {
                 name: body.querySelector('.template-name-input').value.trim() || 'Untitled',
                 subject: body.querySelector('.template-textarea.subject').value,
-                message: body.querySelector('.template-textarea.message').value
+                message: body.querySelector('.template-textarea.message').value,
+                campaign: body.querySelector('.template-campaign-input').value.trim()
             });
         });
     });
@@ -352,6 +356,7 @@ function saveTemplate(id, updates) {
             tmpl.name = updates.name;
             tmpl.subject = updates.subject;
             tmpl.message = updates.message;
+            tmpl.campaign = updates.campaign;
         }
         chrome.storage.local.set({ messageTemplates: templates }, function() {
             renderTemplates(templates);
