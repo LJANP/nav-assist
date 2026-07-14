@@ -539,7 +539,7 @@ class LinkedInScraper {
           const key = (p.fullName || '').trim().toLowerCase();
           const hit = sent[key];
           if (hit) {
-            return Object.assign({}, p, { sentMessage: hit.message, sentDate: hit.date });
+            return Object.assign({}, p, { sentMessage: hit.message, sentDate: hit.date, campaign: hit.campaign || '' });
           }
           return p;
         });
@@ -1105,7 +1105,8 @@ const SessionManager = {
         company: p.company || '',
         linkedInUrl: p.profileUrl || '',
         sentDate: p.sentDate || '',
-        sentMessage: p.sentMessage || ''
+        sentMessage: p.sentMessage || '',
+        campaign: p.campaign || ''
       };
     });
 
@@ -1138,6 +1139,12 @@ Rules:
         - Status: "Completed"
         - Type: "LinkedIn Connection"
         - LDR Call Type: "Not Connected"
+      If campaign is non-empty, run search_campaigns with the campaign
+      value as queryTerm. Only use a campaign's ID if the match is exact
+      (case-insensitive) or an obvious variant. If a confident match is
+      found, set the Call's campaign field to that campaign ID. If no
+      confident match, log the Call without a campaign and list under
+      "Unmatched campaigns". If campaign is empty, omit it.
       If sentMessage is empty, skip call logging for that contact.
 3. Never create a contact without an accountId. Skip and list as
    unmatched if no account is found.
@@ -1151,6 +1158,7 @@ After completion, output:
 - Duplicates skipped: count and list of (name, existing contact ID)
 - Calls logged: count and list of (name, contact ID)
 - Unmatched accounts: count and list of (name, company)
+- Unmatched campaigns: count and list of (name, campaign tag)
 - Errors: count and list of (name, error)
 
 Contacts:

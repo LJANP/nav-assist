@@ -194,7 +194,8 @@ function insertTemplate(inputElement, templateType) {
         chrome.runtime.sendMessage({
           action: 'recordSentMessage',
           fullName: fullName,
-          message: personalizedMessage
+          message: personalizedMessage,
+          campaign: (typeof active !== 'undefined' && active) ? (active.campaign || '') : ''
         }, function(response) {
           showPasteFeedback(response && response.recorded);
         });
