@@ -263,7 +263,7 @@ function renderTemplates(templates, expandId) {
             '<textarea class="template-textarea subject" placeholder="Quick question for {name}">' + escapeHtml(tmpl.subject) + '</textarea></div>' +
             '<div class="template-group"><div class="template-label">Message</div>' +
             '<textarea class="template-textarea message" placeholder="Hey {name}, thanks for connecting!">' + escapeHtml(tmpl.message) + '</textarea></div>' +
-            '<div class="template-group"><div class="template-label">Campaign (optional)</div>' +
+            '<div class="template-group"><div class="template-label">Campaign Tag (optional)</div>' +
             '<input class="template-campaign-input" placeholder="Campaign name / tag" value="' + escapeAttr(tmpl.campaign) + '"></div>' +
             '<button class="template-save-btn">Save</button>';
 
