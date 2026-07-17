@@ -539,7 +539,7 @@ class LinkedInScraper {
           const key = (p.fullName || '').trim().toLowerCase();
           const hit = sent[key];
           if (hit) {
-            return Object.assign({}, p, { sentMessage: hit.message, sentDate: hit.date, campaign: hit.campaign || '' });
+            return Object.assign({}, p, { sentMessage: hit.message, sentSubject: hit.subject || '', sentDate: hit.date, campaign: hit.campaign || '' });
           }
           return p;
         });
@@ -604,6 +604,7 @@ class LinkedInScraper {
       const hasSentMessage = data.some(item => item.sentMessage);
       if (hasSentMessage) {
         headers.push('Sent Date');
+        headers.push('Sent Subject');
         headers.push('Sent Message');
       }
 
@@ -627,6 +628,7 @@ class LinkedInScraper {
         if (this.filters.includeLocation) row.push(profile.location || '');
         if (hasStatus) row.push(profile.status || '');
         if (hasSentMessage) row.push(profile.sentDate || '');
+        if (hasSentMessage) row.push(profile.sentSubject || '');
         if (hasSentMessage) row.push(profile.sentMessage || '');
         return row;
       });
@@ -699,6 +701,7 @@ class LinkedInScraper {
       const hasSentMessage = data.some(item => item.sentMessage);
       if (hasSentMessage) {
         headers.push('Sent Date');
+        headers.push('Sent Subject');
         headers.push('Sent Message');
       }
 
@@ -723,6 +726,7 @@ class LinkedInScraper {
           if (this.filters.includeLocation) row.push(this.escapeCSV(profile.location || ''));
           if (hasStatus) row.push(this.escapeCSV(profile.status || ''));
           if (hasSentMessage) row.push(this.escapeCSV(profile.sentDate || ''));
+          if (hasSentMessage) row.push(this.escapeCSV(profile.sentSubject || ''));
           if (hasSentMessage) row.push(this.escapeCSV(profile.sentMessage || ''));
           return row.join(',');
         })
@@ -1105,6 +1109,7 @@ const SessionManager = {
         company: p.company || '',
         linkedInUrl: p.profileUrl || '',
         sentDate: p.sentDate || '',
+        sentSubject: p.sentSubject || '',
         sentMessage: p.sentMessage || '',
         campaign: p.campaign || ''
       };
@@ -1133,12 +1138,15 @@ Rules:
    d. If sentMessage is non-empty, log a Call (TaskSubtype = "Call")
       attached to the contact (whether newly created or existing duplicate) with:
         - Subject: "LinkedIn message sent"
-        - Description: if sentDate is non-empty,
-          "Sent {sentDate}:\n\n{sentMessage}"
-          otherwise just {sentMessage}
+        - Description: build from the available fields. If sentSubject
+          is non-empty, start with "Subject: {sentSubject}" on its own
+          line. Then, if sentDate is non-empty, add "Sent {sentDate}:"
+          followed by a blank line and {sentMessage}; otherwise add
+          {sentMessage} alone. Separate the subject line from what
+          follows with a blank line.
         - Status: "Completed"
         - Type: "LinkedIn Connection"
-        - LDR Call Type: "Not Connected"
+        - Call Result: "Not Connected"
       If campaign is non-empty, run search_campaigns with the campaign
       value as queryTerm. Only use a campaign's ID if the match is exact
       (case-insensitive) or an obvious variant. If a confident match is

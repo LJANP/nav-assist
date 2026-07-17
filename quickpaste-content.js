@@ -178,12 +178,13 @@ function insertTemplate(inputElement, templateType) {
     if (text) {
       const recipientName = getRecipientName();
       const details = getRecipientDetails();
-      const personalizedMessage = text
+      const fillPlaceholders = (str) => (str || '')
         .replace(/{name}/g, recipientName)
         .replace(/{title}/g, details.title)
         .replace(/{company}/g, details.company)
         .replace(/{location}/g, details.location)
         .replace(/{tenure}/g, details.tenure);
+      const personalizedMessage = fillPlaceholders(text);
       inputElement.value = personalizedMessage;
 
       const event = new Event('input', { bubbles: true });
@@ -191,10 +192,16 @@ function insertTemplate(inputElement, templateType) {
 
       if (templateType === 'messageTemplate') {
         const fullName = getRecipientFullName();
+        // Templates usually carry both a subject and a body; capture the
+        // template's resolved subject here so it can be logged with the message.
+        const subject = (typeof active !== 'undefined' && active)
+          ? fillPlaceholders(active.subject)
+          : '';
         chrome.runtime.sendMessage({
           action: 'recordSentMessage',
           fullName: fullName,
           message: personalizedMessage,
+          subject: subject,
           campaign: (typeof active !== 'undefined' && active) ? (active.campaign || '') : ''
         }, function(response) {
           showPasteFeedback(response && response.recorded);
