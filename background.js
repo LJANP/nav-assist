@@ -55,6 +55,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const sent = result.sentMessages;
       sent[target] = {
         message: message.message,
+        subject: message.subject || '',
         date: formatSentDate(new Date()),
         campaign: message.campaign || ''
       };

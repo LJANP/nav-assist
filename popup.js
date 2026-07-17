@@ -153,6 +153,7 @@ function getSelectedHeaders() {
     if (document.getElementById('includeStatus').checked) headers.push('Status');
     if (hasSentMessageCache) {
         headers.push('Sent Date');
+        headers.push('Sent Subject');
         headers.push('Sent Message');
     }
     return headers;
@@ -175,6 +176,7 @@ function updateHeadersDisplay(settings) {
         if (settings.includeStatus) headers.push('Status');
         if (hasSentMessageCache) {
             headers.push('Sent Date');
+            headers.push('Sent Subject');
             headers.push('Sent Message');
         }
         document.getElementById('headersText').textContent = headers.join('  |  ');
