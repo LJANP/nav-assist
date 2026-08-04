@@ -50,3 +50,29 @@
 .linkedin-template-button:active {
   transform: translateY(1px);
 }
+
+/* WhatsApp QuickPaste button */
+.whatsapp-template-button {
+  position: absolute;
+  background-color: #0a66c2;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 999999;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  margin-top: -5px;
+}
+
+.whatsapp-template-button:hover {
+  background-color: #004182;
+}
+
+.whatsapp-template-button:active {
+  transform: translateY(1px);
+}

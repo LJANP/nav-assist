@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "NavAssist",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "description": "One-click prospect export and personalized messaging for LinkedIn.",
   "icons": {
     "16": "icons/icon16.png",
@@ -12,7 +12,8 @@
     "storage"
   ],
   "host_permissions": [
-    "https://*.linkedin.com/*"
+    "https://*.linkedin.com/*",
+    "https://web.whatsapp.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -26,6 +27,11 @@
     {
       "matches": ["https://*.linkedin.com/*"],
       "js": ["export-content.js", "quickpaste-content.js"],
+      "css": ["styles.css"]
+    },
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["whatsapp-content.js"],
       "css": ["styles.css"]
     }
   ],

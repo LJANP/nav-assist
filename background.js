@@ -45,6 +45,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'recordWhatsAppTouchpoint') {
+    const phone = (message.phone || '').trim();
+    const name = (message.name || '').trim();
+    if ((!phone && !name) || !message.message) {
+      sendResponse({ recorded: false });
+      return true;
+    }
+    chrome.storage.local.get({ whatsappTouchpoints: [] }, function(result) {
+      const touchpoints = result.whatsappTouchpoints;
+      const record = {
+        phone: phone,
+        name: name,
+        message: message.message,
+        date: formatSentDate(new Date())
+      };
+      // Same-session dedup: replace a prior touchpoint for the same recipient.
+      const key = phone ? 'phone' : 'name';
+      const value = phone || name;
+      const existingIndex = touchpoints.findIndex(function(t) {
+        return t[key] === value;
+      });
+      if (existingIndex !== -1) {
+        touchpoints[existingIndex] = record;
+      } else {
+        touchpoints.push(record);
+      }
+      chrome.storage.local.set({ whatsappTouchpoints: touchpoints }, function() {
+        sendResponse({ recorded: true, count: touchpoints.length });
+      });
+    });
+    return true;
+  }
+
   if (message.action === 'recordSentMessage') {
     const target = (message.fullName || '').trim().toLowerCase();
     if (!target || !message.message) {
