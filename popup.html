@@ -447,6 +447,7 @@
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="export">Export</button>
     <button class="tab-btn" data-tab="messaging">Messaging</button>
+    <button class="tab-btn" data-tab="whatsapp">WhatsApp</button>
   </div>
 
   <!-- ========== EXPORT TAB ========== -->
@@ -546,6 +547,31 @@
       <div class="helper-text">Placeholders: {name}, {title}, {company}, {location}, {tenure}</div>
       <div id="templateList"></div>
       <button class="add-template-btn" id="addTemplateBtn">+ New Template</button>
+    </div>
+  </div>
+
+  <!-- ========== WHATSAPP TAB ========== -->
+  <div class="tab-content" id="tab-whatsapp">
+    <div class="card-container">
+      <div class="card-title">WhatsApp Templates</div>
+      <div class="helper-text">Plain message templates. Click "Paste Message" in a WhatsApp chat to send and log the touchpoint.</div>
+      <div id="waTemplateList"></div>
+      <button class="add-template-btn" id="waAddTemplateBtn">+ New Template</button>
+    </div>
+
+    <div class="card-container">
+      <div class="captured-status">
+        <div class="captured-count" id="waTouchpointCount">0</div>
+        <div>touchpoints logged</div>
+      </div>
+      <button class="reset-btn" id="waResetBtn">Reset</button>
+    </div>
+
+    <div class="card-container">
+      <div class="card-title">Send to Salesforce</div>
+      <div class="helper-text">Copies a prompt for Quicksuite to log these interactions as Activities in Salesforce. Requires Quicksuite with Salesforce MCP.</div>
+      <button class="copy-button" id="waSendToSfdcBtn">Send to SFDC via Quicksuite</button>
+      <div class="helper-text" id="waSfdcConfirm" style="display: none; margin-top: 10px; color: #2e7d32;"></div>
     </div>
   </div>
 

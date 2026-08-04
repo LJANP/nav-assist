@@ -137,6 +137,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // ========== WHATSAPP TAB: TEMPLATES + TOUCHPOINTS ==========
+
+    loadWhatsAppTemplates();
+    loadTouchpointCount();
+
+    document.getElementById('waAddTemplateBtn').addEventListener('click', function() {
+        chrome.storage.local.get({ whatsappTemplates: [] }, function(result) {
+            var templates = result.whatsappTemplates;
+            var newTemplate = {
+                id: 'wa_' + Date.now(),
+                name: 'New Template',
+                message: '',
+                active: templates.length === 0
+            };
+            templates.push(newTemplate);
+            chrome.storage.local.set({ whatsappTemplates: templates }, function() {
+                renderWhatsAppTemplates(templates, newTemplate.id);
+            });
+        });
+    });
+
+    document.getElementById('waResetBtn').addEventListener('click', function() {
+        chrome.storage.local.set({ whatsappTouchpoints: [] }, function() {
+            loadTouchpointCount();
+        });
+    });
+
+    document.getElementById('waSendToSfdcBtn').addEventListener('click', sendWhatsAppToSFDC);
+
 }); // end DOMContentLoaded
 
 // ========== HELPER FUNCTIONS ==========
@@ -372,4 +401,233 @@ function escapeAttr(str) {
 
 function escapeHtml(str) {
     return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ========== WHATSAPP TEMPLATE LIBRARY ==========
+
+function loadWhatsAppTemplates() {
+    chrome.storage.local.get({ whatsappTemplates: [] }, function(result) {
+        renderWhatsAppTemplates(result.whatsappTemplates);
+    });
+}
+
+function renderWhatsAppTemplates(templates, expandId) {
+    var list = document.getElementById('waTemplateList');
+    list.innerHTML = '';
+
+    if (!templates.length) {
+        list.innerHTML = '<div class="empty-state">No templates yet</div>';
+        return;
+    }
+
+    templates.forEach(function(tmpl) {
+        var item = document.createElement('div');
+        item.className = 'template-item';
+
+        // Header
+        var header = document.createElement('div');
+        header.className = 'template-item-header';
+
+        var chevron = document.createElement('span');
+        chevron.className = 'chevron';
+        chevron.innerHTML = '&#9654;';
+
+        var name = document.createElement('span');
+        name.className = 'template-name';
+        name.textContent = tmpl.name;
+
+        var dot = document.createElement('div');
+        dot.className = 'active-dot' + (tmpl.active ? ' is-active' : '');
+        dot.title = tmpl.active ? 'Active template' : 'Set as active';
+
+        var deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '&#128465;';
+        deleteBtn.title = 'Delete';
+
+        header.appendChild(chevron);
+        header.appendChild(name);
+        header.appendChild(dot);
+        header.appendChild(deleteBtn);
+
+        // Body
+        var body = document.createElement('div');
+        body.className = 'template-item-body';
+
+        body.innerHTML =
+            '<input class="template-name-input" placeholder="Template name" value="' + escapeAttr(tmpl.name) + '">' +
+            '<div class="template-group"><div class="template-label">Message</div>' +
+            '<textarea class="template-textarea message" placeholder="Type your WhatsApp message here">' + escapeHtml(tmpl.message) + '</textarea></div>' +
+            '<button class="template-save-btn">Save</button>';
+
+        item.appendChild(header);
+        item.appendChild(body);
+        list.appendChild(item);
+
+        // Expand if requested
+        if (expandId === tmpl.id) {
+            body.classList.add('expanded');
+            chevron.style.transform = 'rotate(90deg)';
+        }
+
+        // Toggle expand/collapse
+        chevron.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleWhatsAppBody(body, chevron);
+        });
+        name.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleWhatsAppBody(body, chevron);
+        });
+
+        // Set active
+        dot.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setActiveWhatsAppTemplate(tmpl.id);
+        });
+
+        // Delete
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteWhatsAppTemplate(tmpl.id);
+        });
+
+        // Save
+        body.querySelector('.template-save-btn').addEventListener('click', function() {
+            saveWhatsAppTemplate(tmpl.id, {
+                name: body.querySelector('.template-name-input').value.trim() || 'Untitled',
+                message: body.querySelector('.template-textarea.message').value
+            });
+        });
+    });
+}
+
+function toggleWhatsAppBody(body, chevron) {
+    var isOpen = body.classList.contains('expanded');
+    var list = document.getElementById('waTemplateList');
+    list.querySelectorAll('.template-item-body').forEach(function(b) { b.classList.remove('expanded'); });
+    list.querySelectorAll('.template-item-header .chevron').forEach(function(c) { c.style.transform = ''; });
+    if (!isOpen) {
+        body.classList.add('expanded');
+        chevron.style.transform = 'rotate(90deg)';
+    }
+}
+
+function setActiveWhatsAppTemplate(id) {
+    chrome.storage.local.get({ whatsappTemplates: [] }, function(result) {
+        var templates = result.whatsappTemplates;
+        templates.forEach(function(t) { t.active = t.id === id; });
+        chrome.storage.local.set({ whatsappTemplates: templates }, function() {
+            renderWhatsAppTemplates(templates);
+        });
+    });
+}
+
+function deleteWhatsAppTemplate(id) {
+    chrome.storage.local.get({ whatsappTemplates: [] }, function(result) {
+        var templates = result.whatsappTemplates;
+        if (templates.length === 1 && !confirm('Delete your last template?')) return;
+        var wasActive = templates.find(function(t) { return t.id === id; });
+        templates = templates.filter(function(t) { return t.id !== id; });
+        // Auto-promote if deleted was active
+        if (wasActive && wasActive.active && templates.length > 0) {
+            templates[0].active = true;
+        }
+        chrome.storage.local.set({ whatsappTemplates: templates }, function() {
+            renderWhatsAppTemplates(templates);
+        });
+    });
+}
+
+function saveWhatsAppTemplate(id, updates) {
+    chrome.storage.local.get({ whatsappTemplates: [] }, function(result) {
+        var templates = result.whatsappTemplates;
+        var tmpl = templates.find(function(t) { return t.id === id; });
+        if (tmpl) {
+            tmpl.name = updates.name;
+            tmpl.message = updates.message;
+        }
+        chrome.storage.local.set({ whatsappTemplates: templates }, function() {
+            renderWhatsAppTemplates(templates);
+        });
+    });
+}
+
+// ========== WHATSAPP TOUCHPOINTS + SFDC HANDOFF ==========
+
+function loadTouchpointCount() {
+    chrome.storage.local.get({ whatsappTouchpoints: [] }, function(result) {
+        document.getElementById('waTouchpointCount').textContent = result.whatsappTouchpoints.length;
+    });
+}
+
+function sendWhatsAppToSFDC() {
+    chrome.storage.local.get({ whatsappTouchpoints: [] }, function(result) {
+        var touchpoints = result.whatsappTouchpoints;
+        if (!touchpoints.length) {
+            alert('No touchpoints captured. Log some in WhatsApp first.');
+            return;
+        }
+
+        var prompt = buildWhatsAppSfdcPrompt(touchpoints);
+        navigator.clipboard.writeText(prompt).then(function() {
+            var button = document.getElementById('waSendToSfdcBtn');
+            var original = button.textContent;
+            button.textContent = 'Copied!';
+            button.style.backgroundColor = '#2e7d32';
+
+            var confirm = document.getElementById('waSfdcConfirm');
+            confirm.textContent = '✓ Copied! Open Quicksuite, paste, and press Enter.';
+            confirm.style.display = 'block';
+
+            setTimeout(function() {
+                button.textContent = original;
+                button.style.backgroundColor = '';
+            }, 1500);
+            setTimeout(function() {
+                confirm.style.display = 'none';
+            }, 4000);
+        }).catch(function() {
+            alert('Failed to copy to clipboard. Please try again.');
+        });
+    });
+}
+
+function buildWhatsAppSfdcPrompt(touchpoints) {
+    var json = JSON.stringify(touchpoints, null, 2);
+    return [
+        'Log the following WhatsApp interactions into Salesforce as completed Activities',
+        'on existing Contacts.',
+        '',
+        'Rules:',
+        '1. Only use field values from the JSON below. Never infer or guess.',
+        '2. For each interaction:',
+        '   a. If a phone is present, find the Contact by phone: strip all non-digit',
+        '      characters from both the interaction phone and each candidate Contact',
+        '      phone field, and compare on the trailing significant digits. Use a',
+        '      Contact only if EXACTLY ONE matches.',
+        '   b. If a name is present instead of a phone (no phone provided), search',
+        '      Contacts by name. Use a Contact only if exactly one clear match exists.',
+        '   c. If zero matches, or more than one match, skip and list under',
+        '      "Unmatched / ambiguous" — do not guess and do not create a Contact.',
+        '3. Never create a Contact. These are all existing Contacts. If none matches,',
+        '   the interaction is skipped.',
+        '4. For each matched Contact, run create_standard_task (or log an Activity) with:',
+        '   - subject: "Sent WhatsApp message via NavAssist"',
+        '   - description: the value of "message" for that interaction',
+        '   - whoId: the matched Contact ID',
+        '   - activityDate: the value of "date" for that interaction',
+        '   - status: "Completed"',
+        '   - type: "Other"',
+        '5. Process sequentially. If three consecutive interactions fail for the same',
+        '   reason, stop and report.',
+        '',
+        'After completion, output:',
+        '- Logged: count and list of (phone/name, contact ID)',
+        '- Unmatched / ambiguous: count and list of (phone/name)',
+        '- Errors: count and list of (phone/name, error)',
+        '',
+        'Interactions:',
+        json
+    ].join('\n');
 }
