@@ -23,33 +23,47 @@
 <body>
 
   <h1>Privacy Policy — NavAssist</h1>
-  <p><strong>Last updated: March 30, 2026</strong></p>
+  <p><strong>Last updated: August 6, 2026</strong></p>
 
   <h2>Data Collection</h2>
-  <p>NavAssist does not collect, transmit, or share any personal data or 
-  browsing information. All data processed by the extension stays entirely 
-  within your browser.</p>
+  <p>NavAssist does not transmit or share any data. Everything the extension
+  processes stays entirely within your browser on your own device. No data is
+  sent to the developer or to any third party.</p>
 
   <h2>Data Storage</h2>
-  <p>The extension stores the following data locally on your device using 
+  <p>The extension stores the following data locally on your device using
   Chrome's built-in storage APIs:</p>
   <ul>
     <li>Export field preferences (which columns to include when exporting)</li>
     <li>Message templates (subject and message text you write)</li>
     <li>Temporarily captured prospect data during an active export session</li>
+    <li>WhatsApp message templates you write</li>
+    <li>Temporarily recorded WhatsApp touchpoints during an active session — the
+    phone number or name shown in the conversation header, the message text you
+    pasted, and the date</li>
   </ul>
-  <p>This data never leaves your browser and is not accessible to the 
-  developer or any third party.</p>
+  <p>Session data is cleared whenever you use the extension's Reset button. This
+  data never leaves your browser and is not accessible to the developer or any
+  third party.</p>
 
   <h2>External Communication</h2>
-  <p>NavAssist makes zero network requests. No data is sent to any external 
+  <p>NavAssist makes zero network requests. No data is sent to any external
   server, API, analytics service, or third party.</p>
+
+  <h2>Clipboard</h2>
+  <p>When you click an export or "Send to SFDC" button, NavAssist copies the
+  relevant data to your system clipboard so you can paste it into another tool of
+  your choosing. This is an explicit action you take; the extension never writes
+  to the clipboard on its own, and it does not read your clipboard.</p>
 
   <h2>Permissions</h2>
   <ul>
     <li><strong>Storage:</strong> Used to save your preferences and templates locally.</li>
-    <li><strong>Host permission (linkedin.com):</strong> Required for the extension 
+    <li><strong>Host permission (linkedin.com):</strong> Required for the extension
     to read prospect information from LinkedIn pages and display its UI elements.</li>
+    <li><strong>Host permission (web.whatsapp.com):</strong> Required for the extension
+    to display its UI elements in WhatsApp Web and to read the open conversation's
+    header so the interaction can be logged against the right contact.</li>
   </ul>
 
   <h2>Changes to This Policy</h2>
@@ -58,7 +72,7 @@
 
   <h2>Contact</h2>
   <p>Questions about this policy? Reach out to 
-  <a href="https://twitter.com/lacst" target="_blank">lacst@amazon.com</a>.</p>
+  <a href="mailto:lacst@amazon.com">lacst@amazon.com</a>.</p>
 
 </body>
 </html>
