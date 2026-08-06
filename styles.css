@@ -118,15 +118,16 @@
   top: 148px;
   right: 20px;
   z-index: 9999;
-  background: none;
-  color: #8696a0;
-  border: 1px solid #8696a0;
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #d1d5db;
   padding: 6px 14px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .whatsapp-reset-btn:hover {
