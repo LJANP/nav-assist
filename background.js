@@ -58,6 +58,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         phone: phone,
         name: name,
         message: message.message,
+        campaign: message.campaign || '',
         date: formatSentDate(new Date())
       };
       // Same-session dedup: replace a prior touchpoint for the same recipient.

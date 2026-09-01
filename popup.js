@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: 'wa_' + Date.now(),
                 name: 'New Template',
                 message: '',
+                campaign: '',
                 active: templates.length === 0
             };
             templates.push(newTemplate);
@@ -456,6 +457,8 @@ function renderWhatsAppTemplates(templates, expandId) {
             '<input class="template-name-input" placeholder="Template name" value="' + escapeAttr(tmpl.name) + '">' +
             '<div class="template-group"><div class="template-label">Message</div>' +
             '<textarea class="template-textarea message" placeholder="Type your WhatsApp message here">' + escapeHtml(tmpl.message) + '</textarea></div>' +
+            '<div class="template-group"><div class="template-label">Campaign Tag (optional)</div>' +
+            '<input class="template-campaign-input" placeholder="Campaign name / tag" value="' + escapeAttr(tmpl.campaign) + '"></div>' +
             '<button class="template-save-btn">Save</button>';
 
         item.appendChild(header);
@@ -494,7 +497,8 @@ function renderWhatsAppTemplates(templates, expandId) {
         body.querySelector('.template-save-btn').addEventListener('click', function() {
             saveWhatsAppTemplate(tmpl.id, {
                 name: body.querySelector('.template-name-input').value.trim() || 'Untitled',
-                message: body.querySelector('.template-textarea.message').value
+                message: body.querySelector('.template-textarea.message').value,
+                campaign: body.querySelector('.template-campaign-input').value.trim()
             });
         });
     });
@@ -544,6 +548,7 @@ function saveWhatsAppTemplate(id, updates) {
         if (tmpl) {
             tmpl.name = updates.name;
             tmpl.message = updates.message;
+            tmpl.campaign = updates.campaign;
         }
         chrome.storage.local.set({ whatsappTemplates: templates }, function() {
             renderWhatsAppTemplates(templates);
