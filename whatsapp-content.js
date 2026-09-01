@@ -102,7 +102,7 @@ function onPasteClick(inputElement) {
     const interval = setInterval(function() {
       if (verifyInserted(inputElement, active.message)) {
         clearInterval(interval);
-        recordTouchpoint(active.message);
+        recordTouchpoint(active.message, active.campaign || '');
       } else if (Date.now() - start >= 300) {
         clearInterval(interval);
         showFeedback('Paste failed');
@@ -112,14 +112,15 @@ function onPasteClick(inputElement) {
 }
 
 // Capture the recipient and record the touchpoint — only after a confirmed insert.
-function recordTouchpoint(message) {
+function recordTouchpoint(message, campaign) {
   const { phone, name } = classifyTitle(getChatTitle());
 
   chrome.runtime.sendMessage({
     action: 'recordWhatsAppTouchpoint',
     phone: phone,
     name: name,
-    message: message
+    message: message,
+    campaign: campaign
   }, function(response) {
     if (response && response.recorded) {
       showFeedback('Message pasted');
@@ -241,13 +242,21 @@ function buildSfdcPrompt(touchpoints) {
     '      guess and do not create a Contact.',
     '3. Never create a Contact. These are all existing Contacts. If none matches,',
     '   the interaction is skipped.',
-    '4. For each matched Contact, run create_standard_task (or log an Activity) with:',
+    '4. For each matched Contact, log a Call (TaskSubtype = "Call") attached',
+    '   to the Contact with:',
     '   - subject: "Sent WhatsApp message via NavAssist"',
     '   - description: the value of "message" for that interaction',
     '   - whoId: the matched Contact ID',
     '   - activityDate: the value of "date" for that interaction',
     '   - status: "Completed"',
     '   - type: "Other"',
+    '   - Call Result: "Not Connected"',
+    '   If campaign is non-empty, run search_campaigns with the campaign',
+    '   value as queryTerm. Only use a campaign\'s ID if the match is exact',
+    '   (case-insensitive) or an obvious variant. If a confident match is',
+    '   found, set the Call\'s campaign field to that campaign ID. If no',
+    '   confident match, log the Call without a campaign and list under',
+    '   "Unmatched campaigns". If campaign is empty, omit it.',
     '5. Process sequentially. If three consecutive interactions fail for the same',
     '   reason, stop and report.',
     '',
@@ -255,6 +264,7 @@ function buildSfdcPrompt(touchpoints) {
     '- Logged: count and list of (phone/name, contact ID)',
     '- Needs manual logging: count and list of (name) — no phone number was available',
     '- Unmatched / ambiguous: count and list of (phone)',
+    '- Unmatched campaigns: count and list of (phone/name, campaign tag)',
     '- Errors: count and list of (phone/name, error)',
     '',
     'Interactions:',
