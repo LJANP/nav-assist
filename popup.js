@@ -159,6 +159,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    var waIncludeInstructions = document.getElementById('waIncludeInstructions');
+    chrome.storage.sync.get({ whatsappIncludeInstructions: true }, function(result) {
+        waIncludeInstructions.checked = result.whatsappIncludeInstructions;
+    });
+    waIncludeInstructions.addEventListener('change', function() {
+        chrome.storage.sync.set({ whatsappIncludeInstructions: waIncludeInstructions.checked });
+    });
+
     document.getElementById('waResetBtn').addEventListener('click', function() {
         chrome.storage.local.set({ whatsappTouchpoints: [] }, function() {
             loadTouchpointCount();

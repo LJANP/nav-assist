@@ -189,7 +189,7 @@ function createSfdcButton() {
 function refreshSfdcButton(count) {
   createSfdcButton();
   if (count > 0) {
-    sfdcButton.textContent = 'Send to SFDC via Quicksuite (' + count + ')';
+    sfdcButton.textContent = 'Copy for Quicksuite (' + count + ')';
     sfdcButton.style.display = 'block';
   } else {
     sfdcButton.style.display = 'none';
@@ -203,18 +203,27 @@ function onSfdcClick() {
     const touchpoints = result.whatsappTouchpoints;
     if (!touchpoints.length) return;
 
-    navigator.clipboard.writeText(buildSfdcPrompt(touchpoints)).then(function() {
-      const label = sfdcButton.textContent;
-      sfdcButton.textContent = 'Copied!';
-      setTimeout(function() { sfdcButton.textContent = label; }, 1500);
+    chrome.storage.sync.get({ whatsappIncludeInstructions: true }, function(settings) {
+      const includeInstructions = settings.whatsappIncludeInstructions;
+      const text = includeInstructions
+        ? buildSfdcPrompt(touchpoints)
+        : JSON.stringify(touchpoints, null, 2);
 
-      sfdcConfirm.textContent = '✓ Copied! Open Quicksuite, paste, and press Enter.';
-      sfdcConfirm.style.display = 'block';
-      setTimeout(function() { sfdcConfirm.style.display = 'none'; }, 4000);
+      navigator.clipboard.writeText(text).then(function() {
+        const label = sfdcButton.textContent;
+        sfdcButton.textContent = 'Copied!';
+        setTimeout(function() { sfdcButton.textContent = label; }, 1500);
 
-      sfdcResetButton.style.display = 'block';
-    }).catch(function() {
-      alert('Failed to copy to clipboard. Please try again.');
+        sfdcConfirm.textContent = includeInstructions
+          ? '✓ Copied! Open Quicksuite, paste, and press Enter.'
+          : '✓ Copied!';
+        sfdcConfirm.style.display = 'block';
+        setTimeout(function() { sfdcConfirm.style.display = 'none'; }, 4000);
+
+        sfdcResetButton.style.display = 'block';
+      }).catch(function() {
+        alert('Failed to copy to clipboard. Please try again.');
+      });
     });
   });
 }
